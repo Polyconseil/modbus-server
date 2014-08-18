@@ -6,6 +6,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <string.h>
@@ -25,7 +26,7 @@
 #include <arpa/inet.h>
 #endif
 
-#define NB_CONNECTION    5
+#define NB_CONNECTION    INT_MAX
 
 modbus_t *ctx = NULL;
 int server_socket = -1;
@@ -91,14 +92,14 @@ int main(int argc, char **argv) {
     for (int index = optind; index < argc; index++)
         printf ("Non-option argument %s\n", argv[index]);
 
-    if(ip_addr == NULL) {
+    if (ip_addr == NULL) {
         ip_addr = "127.0.0.1";
     } else if(!is_valid_ip(ip_addr)) {
         printf("%s is not a valid ip address, please try with a proper ip address \n", ip_addr);
         return -1;
     }
 
-    if(port_s == NULL) {
+    if (port_s == NULL) {
         port = 1502;
     } else if (atoi(port_s) > 0) {
         port = atoi(port_s);
@@ -111,8 +112,9 @@ int main(int argc, char **argv) {
 
     ctx = modbus_new_tcp(ip_addr, port);
 
-    mb_mapping = modbus_mapping_new(MODBUS_MAX_READ_BITS, 0,
-                                    MODBUS_MAX_READ_REGISTERS, 0);
+    /* For reading registers and bits, the addesses go from 0 to 0xFFFF */
+    mb_mapping = modbus_mapping_new(0xFFFF, 0,
+                                    0xFFFF, 0);
     if (mb_mapping == NULL) {
         fprintf(stderr, "Failed to allocate the mapping: %s\n",
                 modbus_strerror(errno));
